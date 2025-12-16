@@ -2,13 +2,24 @@ import logging
 import argparse
 import os
 import sys
+
+# Критически важные импорты пути ДО других импортов
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters, ConversationHandler
 from telegram.constants import ParseMode
 
-# Добавляем путь для импорта вашей базы данных
-sys.path.insert(0, '.')
-from bookbot.database import DatabaseManager
+try:
+    from bookbot.database import DatabaseManager
+    print("✅ Модуль database успешно импортирован")
+except ImportError as e:
+    print(f"❌ Ошибка импорта: {e}")
+    print("📁 Текущая директория:", os.getcwd())
+    print("📁 Содержимое папки bookbot:")
+    for item in os.listdir('bookbot'):
+        print(f"   - {item}")
+    sys.exit(1)
 
 EMOJI = {
     "search": "🔍", "star": "⭐️", "fire": "🔥", "trophy": "🏆", "plus": "➕",
@@ -23,7 +34,14 @@ class BookBot:
     def __init__(self, token: str):
         self.token = token
         self.application = None
-        self.db = DatabaseManager('telegram_books.db')  # База для телеграм-бота
+        
+        # Тест подключения к базе
+        try:
+            self.db = DatabaseManager('telegram_books.db')
+            print("✅ База данных успешно подключена")
+        except Exception as e:
+            print(f"❌ Ошибка подключения к БД: {e}")
+            raise
         
         logging.basicConfig(
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
